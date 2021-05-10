@@ -4,6 +4,7 @@
 // init project
 var express = require('express');
 var app = express();
+var path = require('path');
 
 // enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
 // so that your API is remotely testable by FCC 
@@ -12,10 +13,12 @@ app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 20
 
 // http://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // http://expressjs.com/en/starter/basic-routing.html
 app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
+  res.sendFile(__dirname + '/public/style.css');
 });
 
 
@@ -25,12 +28,12 @@ app.get("/api/hello", function (req, res) {
 });
 
 // api root
-app.get("/api/timestamp", (req,res)=>{
+app.get("/api", (req,res)=>{
   res.json({unix: Date.now(), utc:Date()});
 });
 
 // api extension
-app.get("/api/timestamp/:time",function(req,res){
+/*app.get("/api/:time",function(req,res){
   // evaluate regex.
   var regex1 = new RegExp('^....\-..\-..$')
   var regex2 = new RegExp('^.............$')
@@ -51,6 +54,29 @@ app.get("/api/timestamp/:time",function(req,res){
     else {
       res.json({unix: dateObject.valueOf(), utc:dateObject.toUTCString()});
       }
+  }
+});
+*/
+
+// api2
+// api extension
+app.get("/api/:date_string", (req, res) => {
+  let dateString = req.params.date_string;
+
+  //A 4 digit number is a valid ISO-8601 for the beginning of that year
+  //5 digits or more must be a unix time, until we reach a year 10,000 problem
+  if (/\d{5,}/.test(dateString)) {
+    const dateInt = parseInt(dateString);
+    //Date regards numbers as unix timestamps, strings are processed differently
+    res.json({ unix: dateInt, utc: new Date(dateInt).toUTCString() });
+  } else {
+    let dateObject = new Date(dateString);
+
+    if (dateObject.toString() === "Invalid Date") {
+      res.json({ error: "Invalid Date" });
+    } else {
+      res.json({ unix: dateObject.valueOf(), utc: dateObject.toUTCString() });
+    }
   }
 });
 
